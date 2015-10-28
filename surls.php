@@ -14,11 +14,15 @@
  */
 session_start();
 
+/*
+ * ":" is not allowed in username/password
+ * Password can be raw or md5() value
+ */
 $credentials = array(
     'username' => 'admin',
-//    'password' => 'admin', 'md5_hashed' => false,
-    'password' => '21232f297a57a5a743894a0e4a801fc3', 'md5_hashed' => true,
-); // Note ":" is not allowed in username/password
+//    'password' => 'admin',
+    'password' => '21232f297a57a5a743894a0e4a801fc3',
+);
 
 BasicAuthenticator::Authenticate($credentials);
 Request::handleRequest();
@@ -33,10 +37,10 @@ class BasicAuthenticator {
         }
 
         if ($credentials['username'] == $_SERVER['PHP_AUTH_USER']) {
-            if (false == $credentials['md5_hashed'] && $credentials['password'] == $_SERVER['PHP_AUTH_PW']) {
+            if (32 == strlen($credentials['password']) && strtolower($credentials['password']) == md5($_SERVER['PHP_AUTH_PW'])) {
                 return;
             }
-            if (true == $credentials['md5_hashed'] && strtolower($credentials['password']) == md5($_SERVER['PHP_AUTH_PW'])) {
+            if (32 != strlen($credentials['password']) && $credentials['password'] == $_SERVER['PHP_AUTH_PW']) {
                 return;
             }
         }
@@ -204,7 +208,7 @@ class Request {
                                 table.children('tr').remove();
                             }
                         }
-                                
+
                         var redirect_rules = {
                             load: function () {
                                 return $.ajax({
@@ -223,23 +227,23 @@ class Request {
                                 }).responseText;
                             }
                         }
-                                
-                                
+
+
                         jQuery('#op_mom').click(function () {
                             if (!(confirm("Click F5, You Idiot!\n\nCan you do this?"))) {
                                 location.reload();
                             }
                         });
-                                
+
                         jQuery('#rows_add').click(function () {
                             rules_table.createRows(5);
                         });
-                                
+
                         jQuery(document).on('click', '.rule_delete', function () {
                             $(this).closest('tr').remove();
                             rules_table.reloadIndex();
                         });
-                                
+
                         jQuery('#update_rules').click(function () {
                             $('#loader').css('display', 'block');
                             jQuery('#update_rules').val('Updating..');
@@ -255,7 +259,7 @@ class Request {
                                     };
                                 }
                             });
-                                    
+
                             var data = redirect_rules.update(data);
                             var json = $.parseJSON(data);
                             rules_table.empty();
@@ -264,13 +268,13 @@ class Request {
                             jQuery('#update_rules').val('Update');
                             alert('Updated');
                         });
-                                
+
                         var data = redirect_rules.load();
                         var json = $.parseJSON(data);
                         rules_table.add_rows(json);
                         $('#loader').css('display', 'none');
                     });
-                            
+
                 </script>
             </head>
             <body>
