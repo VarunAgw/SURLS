@@ -264,6 +264,7 @@ class Request {
                             var json = $.parseJSON(data);
                             rules_table.empty();
                             rules_table.add_rows(json);
+                            rules_table.createRows(2);
                             $('#loader').css('display', 'none');
                             jQuery('#update_rules').val('Update');
                             alert('Updated');
@@ -272,6 +273,7 @@ class Request {
                         var data = redirect_rules.load();
                         var json = $.parseJSON(data);
                         rules_table.add_rows(json);
+                        rules_table.createRows(2);
                         $('#loader').css('display', 'none');
                     });
 
