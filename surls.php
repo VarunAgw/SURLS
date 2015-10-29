@@ -60,11 +60,17 @@ class BasicAuthenticator {
 
 class CSRFProtection {
 
-    public static function getCSRFToken() {
-        if (!isset($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = base64_encode(openssl_random_pseudo_bytes(32));
-        }
+    public static function generateNewCsrfToken() {
+        $_SESSION['csrf_token'] = base64_encode(openssl_random_pseudo_bytes(32));
         return $_SESSION['csrf_token'];
+    }
+
+    public static function getCSRFToken() {
+        if (isset($_SESSION['csrf_token'])) {
+            return $_SESSION['csrf_token'];
+        } else {
+            return self::generateNewCsrfToken();
+        }
     }
 
     public static function validateRequest($token) {
