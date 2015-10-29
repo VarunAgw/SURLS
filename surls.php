@@ -120,6 +120,10 @@ class htaccess {
     }
 
     public static function updateRedirectRules($redirectRules) {
+        $redirect_rule_comments = array(
+            'prefix' => '# BEGAN SURLS AUTO-GENERATED CODE',
+            'suffix' => '# FINISHED SURLS AUTO-GENERATED CODE'
+        );
         $file_contents = array();
 
         if (!file_exists('.htaccess')) {
@@ -129,12 +133,13 @@ class htaccess {
         $fp = fopen('.htaccess', 'r');
         while (!feof($fp)) {
             $line = rtrim(fgets($fp));
-            if (false === self::parseRedirectRule($line)) {
+            if (false === self::parseRedirectRule($line) && !in_array($line, $redirect_rule_comments)) {
                 $file_contents[] = $line;
             }
         }
         fclose($fp);
 
+        $file_contents[] = $redirect_rule_comments['prefix'];
         foreach ($redirectRules as $alias => $redirectRule) {
             $file_contents[] = '' .
                     ($redirectRule['enabled'] == 'true' ? '' : '# ') .
@@ -143,6 +148,7 @@ class htaccess {
                     '/' . $alias . ' ' .
                     $redirectRule['url'];
         }
+        $file_contents[] = $redirect_rule_comments['suffix'];
 
         $file_content = implode("\n", $file_contents);
         file_put_contents('.htaccess', $file_content);
