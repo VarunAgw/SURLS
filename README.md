@@ -19,14 +19,14 @@ Apache with support for `.htaccess` and `mod_alias` enabled.
 #### What is the URL of aliases created by it?
 You can access them via any of these:
 - `https://www.example.com/%alias%`
-- `https://www.example.com/surls.php?q=%alias%`
+- `https://www.example.com/surls.php?l=%alias%`
 - `https://www.example.com/s/%alias%` (Requires a rewrite rule in .htaccess, see below on how to add it)
 
 #### What are Rewrite Rules required for third type of link?
 Add these rules in your `.htaccess` to allow these type of links
 ```
 RewriteEngine on
-RewriteRule ^s/(.+)$ surls.php?q=$1 [L]
+RewriteRule ^s/(.+)$ surls.php?l=$1 [L]
 ```
 
 #### How can I add Google Analytics to it
