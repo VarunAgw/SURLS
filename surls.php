@@ -6,7 +6,7 @@
  * Enable mod_rewrite and put this program into website root directory to use it
  * 
  * @package    SURLS
- * @version    1.0
+ * @version    1.1
  * @author     Varun Agrawal <Varun@VarunAgw.com>
  * @copyright  (c) 2015, Varun Agrawal
  * @license    http://www.gnu.org/licenses/gpl.txt GNU General Public License
