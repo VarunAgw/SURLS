@@ -170,6 +170,12 @@ class htaccess {
 class Request {
 
     public static function handleRequest() {
+        if (isset($_REQUEST['alias'])) {
+            $alias = $_REQUEST['alias'];
+            self::aliasPage($alias);
+            return;
+        }
+
         if (!isset($_REQUEST['action'])) {
             CSRFProtection::generateNewCsrfToken();
             BasicAuthenticator::Authenticate();
@@ -192,6 +198,26 @@ class Request {
             $redirect_rules = htaccess::GetRedirectRules();
             echo json_encode($redirect_rules);
             return;
+        }
+    }
+
+    protected static function aliasPage($alias) {
+        if (file_exists('surls_functions.php')) {
+            $custom_functions = require('surls_functions.php');
+        } else {
+            $custom_functions = array();
+        }
+
+        if (isset($custom_functions[$alias])) {
+            $custom_functions[$alias]();
+        } else {
+            $redirect_rules = htaccess::GetRedirectRules();
+            if (isset($redirect_rules[$alias]) && true == $redirect_rules[$alias]['enabled']) {
+                header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules['http_status_code']);
+            } else {
+                header("HTTP/1.0 404 Not Found");
+                echo '<h1>404 Not Found</h1>';
+            }
         }
     }
 
