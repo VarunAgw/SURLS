@@ -110,8 +110,7 @@ class htaccess {
                 . '\s*(#?)'
                 . '\s*RewriteRule'
                 . '\s+\^\(([a-zA-Z0-9]+)\)\$'
-                . '\s+surls\.php\?alias=\$1&code=(301|302)&url=((?:https?|ftp)://.*)'
-                . '(.*)'
+                . '\s+surls\.php\?alias=\$1&code=(301|302)&url=(.+)'
                 . '$~i', $line, $match);
 
         if (empty($match)) {
@@ -121,7 +120,7 @@ class htaccess {
                 'alias' => $match[2],
                 'enabled' => ($match[1] != '#'),
                 'http_status_code' => (int) $match[3],
-                'url' => $match[4],
+                'url' => rawurldecode($match[4]),
             );
         }
     }
@@ -180,7 +179,7 @@ class htaccess {
                     . 'RewriteRule ^('
                     . $alias . ')$ surls.php?alias=$1'
                     . '&code=' . $rule['http_status_code']
-                    . '&url=' . $rule['url'];
+                    . '&url=' . rawurlencode($rule['url']);
         }
         $file_contents[] = $ignored_lines['suffix1'];
 
