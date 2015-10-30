@@ -24,7 +24,6 @@ $credentials = array(
     'password' => '21232f297a57a5a743894a0e4a801fc3',
 );
 
-BasicAuthenticator::Authenticate($credentials);
 Request::handleRequest();
 
 class BasicAuthenticator {
@@ -160,16 +159,27 @@ class Request {
 
     public static function handleRequest() {
         if (!isset($_REQUEST['action'])) {
+            CSRFProtection::generateNewCsrfToken();
+            BasicAuthenticator::Authenticate($credentials);
             self::homePage();
-        } elseif ('get_redirect_rules' == $_REQUEST['action']) {
+            return;
+        }
+
+        if ('get_redirect_rules' == $_REQUEST['action']) {
+            BasicAuthenticator::Authenticate($credentials);
             $redirect_rules = htaccess::GetRedirectRules();
             echo json_encode($redirect_rules);
-        } elseif ('update_redirect_rules' == $_REQUEST['action']) {
+            return;
+        }
+
+        if ('update_redirect_rules' == $_REQUEST['action']) {
+            BasicAuthenticator::Authenticate($credentials);
             if (isset($_REQUEST['csrf_token']) && CSRFProtection::validateRequest($_REQUEST['csrf_token'])) {
                 htaccess::updateRedirectRules($_REQUEST['data']);
             }
             $redirect_rules = htaccess::GetRedirectRules();
             echo json_encode($redirect_rules);
+            return;
         }
     }
 
