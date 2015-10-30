@@ -72,7 +72,15 @@ class CSRFProtection {
         }
     }
 
-    public static function validateRequest($token) {
+    public static function validateRequestParam($param_name) {
+        if (isset($_SESSION['csrf_token'], $_REQUEST[$param_name]) && $_SESSION['csrf_token'] == $_REQUEST[$param_name]) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static function validateRequestToken($token) {
         if (isset($_SESSION['csrf_token']) && $_SESSION['csrf_token'] == $token) {
             return true;
         } else {
@@ -174,7 +182,7 @@ class Request {
 
         if ('update_redirect_rules' == $_REQUEST['action']) {
             BasicAuthenticator::Authenticate($credentials);
-            if (isset($_REQUEST['csrf_token']) && CSRFProtection::validateRequest($_REQUEST['csrf_token'])) {
+            if (CSRFProtection::validateRequestParam('csrf_token')) {
                 htaccess::updateRedirectRules($_REQUEST['data']);
             }
             $redirect_rules = htaccess::GetRedirectRules();
