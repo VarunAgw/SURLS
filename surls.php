@@ -15,20 +15,24 @@
 session_start();
 
 /*
- * ":" is not allowed in username/password
+ * ":" is not allowed in either username/password
  * Password can be raw or md5() value
  */
-$credentials = array(
-    'username' => 'admin',
-//    'password' => 'admin',
-    'password' => '21232f297a57a5a743894a0e4a801fc3',
-);
+BasicAuthenticator::setCredentials('admin', 'admin');
+//BasicAuthenticator::setCredentials('admin', '21232f297a57a5a743894a0e4a801fc3');
 
 Request::handleRequest();
 
 class BasicAuthenticator {
 
-    public static function Authenticate($credentials) {
+    protected static $_credentials;
+
+    public static function setCredentials($username, $password) {
+        self::$_credentials = array('username' => $username, 'password' => $password);
+    }
+
+    public static function Authenticate() {
+        $credentials = self::$_credentials;
         if (!isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'])) {
             header('WWW-Authenticate: Basic realm="Welcome to SURLS: Simple URL Shortner. This developer is lazy to implement a fancy login page');
             header('HTTP/1.0 401 Unauthorized');
@@ -168,20 +172,20 @@ class Request {
     public static function handleRequest() {
         if (!isset($_REQUEST['action'])) {
             CSRFProtection::generateNewCsrfToken();
-            BasicAuthenticator::Authenticate($credentials);
+            BasicAuthenticator::Authenticate();
             self::homePage();
             return;
         }
 
         if ('get_redirect_rules' == $_REQUEST['action']) {
-            BasicAuthenticator::Authenticate($credentials);
+            BasicAuthenticator::Authenticate();
             $redirect_rules = htaccess::GetRedirectRules();
             echo json_encode($redirect_rules);
             return;
         }
 
         if ('update_redirect_rules' == $_REQUEST['action']) {
-            BasicAuthenticator::Authenticate($credentials);
+            BasicAuthenticator::Authenticate();
             if (CSRFProtection::validateRequestParam('csrf_token')) {
                 htaccess::updateRedirectRules($_REQUEST['data']);
             }
