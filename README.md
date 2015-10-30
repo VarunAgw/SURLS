@@ -3,7 +3,7 @@ SURLS is a simple URL shortener written in PHP based on Apache .htaccess and Rew
 
 ### Key Features
  - Single file based and portable
- - Don't need any additional configuration with majority of Apache installatiom
+ - Don't need any additional configuration with majority of Apache installation
  - Supports click tracking
 
 ### Requirement
@@ -35,13 +35,13 @@ To support alias to custom function mapping, you need to add dummy link in admin
 Don't need any additional .htaccess to be added manually and supports all features
 
 #### FAQ for `/r/%alias%`
-It supports alias to custom function mapping without need to add dummy link everytime. But you need to add this small script in .htaccess to enable it.
+It supports alias to custom function mapping without need to add dummy link every time. But you need to add this small script in .htaccess to enable it.
 ```
 RewriteEngine on
 RewriteRule ^r/(.+)$ surls.php?alias=$1 [L]
 ```
 
-#### How can I add Google Analytics to it
+#### How can I add Google Analytics to it?
 Just open the `surls.php` in a text editor and add Google Property code to it. It will do rest of the work itself.
 
 #### I just want simple tracking, not complex solution like GA
