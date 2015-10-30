@@ -2,24 +2,30 @@
 /**
  * SURLS: Simple URL Shortner
  *
- * A simple URL shortner based on Apache mod_alias Redirect Directive
- * Enable mod_alias and put this program into website root directory to use this
+ * A simple URL shortner based on Apache mod_rewrite RewriteRule Directive
+ * Enable mod_rewrite and put this program into website root directory to use it
  * 
  * @package    SURLS
  * @version    1.0
  * @author     Varun Agrawal <Varun@VarunAgw.com>
  * @copyright  (c) 2015, Varun Agrawal
  * @license    http://www.gnu.org/licenses/gpl.txt GNU General Public License
- * @link       https://www.varunagw.com/
+ * @link       https://github.com/VarunAgw/SURLS
  */
 session_start();
 
 /*
  * ":" is not allowed in either username/password
- * Password can be raw or md5() value
+ * Password can be raw or sha256 value
+ * 
+ * Use ` php -r "echo hash('sha256', 'password');"` to generate SHA256 value
+ * Remember to prefix command with a space to prevent logging into history
+ * See http://unix.stackexchange.com/a/115922/121183 for more.
  */
-BasicAuthenticator::setCredentials('admin', 'admin');
-//BasicAuthenticator::setCredentials('admin', '21232f297a57a5a743894a0e4a801fc3');
+BasicAuthenticator::setCredentials(
+        'admin', 'password'
+//        'admin', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'
+);
 
 Request::handleRequest();
 
@@ -40,11 +46,14 @@ class BasicAuthenticator {
         }
 
         if ($credentials['username'] == $_SERVER['PHP_AUTH_USER']) {
-            if (32 == strlen($credentials['password']) && strtolower($credentials['password']) == md5($_SERVER['PHP_AUTH_PW'])) {
-                return;
-            }
-            if (32 != strlen($credentials['password']) && $credentials['password'] == $_SERVER['PHP_AUTH_PW']) {
-                return;
+            if (64 == strlen($credentials['password'])) {
+                if ($credentials['password'] == hash('sha256', $_SERVER['PHP_AUTH_PW'])) {
+                    return;
+                }
+            } else {
+                if ($credentials['password'] == $_SERVER['PHP_AUTH_PW']) {
+                    return;
+                }
             }
         }
 
@@ -96,23 +105,29 @@ class CSRFProtection {
 
 class htaccess {
 
-    protected static function parseRedirectRule($line) {
-        $res = preg_match('~^\s*(#?)\s*redirect\s+(30[1-2])\s+/([a-z]+)\s+((?:https?|ftp)://.*$)~i', $line, $match);
+    protected static function parseRewriteRule($line) {
+        preg_match('~^'
+                . '\s*(#?)'
+                . '\s*RewriteRule'
+                . '\s+\^\(([a-zA-Z0-9]+)\)\$'
+                . '\s+surls\.php\?alias=\$1&code=(301|302)&url=((?:https?|ftp)://.*)'
+                . '(.*)'
+                . '$~i', $line, $match);
 
         if (empty($match)) {
             return false;
         } else {
             return array(
-                'alias' => $match[3],
+                'alias' => $match[2],
                 'enabled' => ($match[1] != '#'),
-                'http_status_code' => $match[2],
-                'url' => $match[4]
+                'http_status_code' => (int) $match[3],
+                'url' => $match[4],
             );
         }
     }
 
-    public static function GetRedirectRules() {
-        $redirectRules = array();
+    public static function GetRewriteRules() {
+        $rewrite_rules = array();
 
         if (!file_exists('.htaccess')) {
             touch('.htaccess');
@@ -121,19 +136,21 @@ class htaccess {
         $fp = fopen('.htaccess', 'r');
         while (!feof($fp)) {
             $line = rtrim(fgets($fp));
-            if (false !== ($rule = self::parseRedirectRule($line))) {
-                $redirectRules[$rule['alias']] = $rule;
-                unset($redirectRules[$rule['alias']]['alias']);
+            if (false !== ($rule = self::parseRewriteRule($line))) {
+                $rewrite_rules[$rule['alias']] = $rule;
+                unset($rewrite_rules[$rule['alias']]['alias']);
             }
         }
         fclose($fp);
-        return $redirectRules;
+        return $rewrite_rules;
     }
 
-    public static function updateRedirectRules($redirectRules) {
-        $redirect_rule_comments = array(
-            'prefix' => '# BEGAN SURLS AUTO-GENERATED CODE',
-            'suffix' => '# FINISHED SURLS AUTO-GENERATED CODE'
+    public static function updateRewriteRules($rules) {
+        $ignored_lines = array(
+            'prefix1' => '# BEGAN SURLS AUTO-GENERATED CODE',
+            'prefix2' => '# MODIFYING THEM MANUALLY IS NOT RECOMMENDED',
+            'suffix1' => '# FINISHED SURLS AUTO-GENERATED CODE',
+            'rewrite_engine' => 'RewriteEngine on',
         );
         $file_contents = array();
 
@@ -142,24 +159,30 @@ class htaccess {
         }
 
         $fp = fopen('.htaccess', 'r');
+        $file_contents[] = $ignored_lines['rewrite_engine'];
         while (!feof($fp)) {
             $line = rtrim(fgets($fp));
-            if (false === self::parseRedirectRule($line) && !in_array($line, $redirect_rule_comments)) {
+            if (false === self::parseRewriteRule($line) && !in_array($line, $ignored_lines)) {
                 $file_contents[] = $line;
             }
         }
         fclose($fp);
 
-        $file_contents[] = $redirect_rule_comments['prefix'];
-        foreach ($redirectRules as $alias => $redirectRule) {
-            $file_contents[] = '' .
-                    ($redirectRule['enabled'] == 'true' ? '' : '# ') .
-                    'Redirect ' .
-                    $redirectRule['http_status_code'] . ' ' .
-                    '/' . $alias . ' ' .
-                    $redirectRule['url'];
+        // Add an empty line to seperate SURLS generated code
+        if ('' != end($file_contents)) {
+            $file_contents[] = '';
         }
-        $file_contents[] = $redirect_rule_comments['suffix'];
+        $file_contents[] = $ignored_lines['prefix1'];
+        $file_contents[] = $ignored_lines['prefix2'];
+        foreach ($rules as $alias => $rule) {
+            $file_contents[] = ' '
+                    . ($rule['enabled'] == 'true' ? '' : '# ')
+                    . 'RewriteRule ^('
+                    . $alias . ')$ surls.php?alias=$1'
+                    . '&code=' . $rule['http_status_code']
+                    . '&url=' . $rule['url'];
+        }
+        $file_contents[] = $ignored_lines['suffix1'];
 
         $file_content = implode("\n", $file_contents);
         file_put_contents('.htaccess', $file_content);
@@ -183,20 +206,20 @@ class Request {
             return;
         }
 
-        if ('get_redirect_rules' == $_REQUEST['action']) {
+        if ('get_rewrite_rules' == $_REQUEST['action']) {
             BasicAuthenticator::Authenticate();
-            $redirect_rules = htaccess::GetRedirectRules();
-            echo json_encode($redirect_rules);
+            $rewrite_rules = htaccess::GetRewriteRules();
+            echo json_encode($rewrite_rules);
             return;
         }
 
-        if ('update_redirect_rules' == $_REQUEST['action']) {
+        if ('update_rewrite_rules' == $_REQUEST['action']) {
             BasicAuthenticator::Authenticate();
             if (CSRFProtection::validateRequestParam('csrf_token')) {
-                htaccess::updateRedirectRules($_REQUEST['data']);
+                htaccess::updateRewriteRules($_REQUEST['data']);
             }
-            $redirect_rules = htaccess::GetRedirectRules();
-            echo json_encode($redirect_rules);
+            $rewrite_rules = htaccess::GetRewriteRules();
+            echo json_encode($rewrite_rules);
             return;
         }
     }
@@ -211,9 +234,9 @@ class Request {
         if (isset($custom_functions[$alias])) {
             $custom_functions[$alias]();
         } else {
-            $redirect_rules = htaccess::GetRedirectRules();
-            if (isset($redirect_rules[$alias]) && true == $redirect_rules[$alias]['enabled']) {
-                header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules['http_status_code']);
+            $rewrite_rules = htaccess::GetRewriteRules();
+            if (isset($rewrite_rules[$alias]) && true == $rewrite_rules[$alias]['enabled']) {
+                header("Location: {$rewrite_rules[$alias]['url']}", true, $rewrite_rules['http_status_code']);
             } else {
                 header("HTTP/1.0 404 Not Found");
                 echo '<h1>404 Not Found</h1>';
@@ -269,12 +292,12 @@ class Request {
                             }
                         }
 
-                        var redirect_rules = {
+                        var rewrite_rules = {
                             load: function () {
                                 return $.ajax({
                                     url: '',
                                     method: 'POST',
-                                    data: {action: 'get_redirect_rules'},
+                                    data: {action: 'get_rewrite_rules'},
                                     async: false,
                                 }).responseText;
                             },
@@ -282,7 +305,7 @@ class Request {
                                 return $.ajax({
                                     url: '',
                                     method: 'POST',
-                                    data: {action: 'update_redirect_rules', data: data, csrf_token: csrf_token},
+                                    data: {action: 'update_rewrite_rules', data: data, csrf_token: csrf_token},
                                     async: false,
                                 }).responseText;
                             }
@@ -320,7 +343,7 @@ class Request {
                                 }
                             });
 
-                            var data = redirect_rules.update(data);
+                            var data = rewrite_rules.update(data);
                             var json = $.parseJSON(data);
                             rules_table.empty();
                             rules_table.add_rows(json);
@@ -330,7 +353,7 @@ class Request {
                             alert('Updated');
                         });
 
-                        var data = redirect_rules.load();
+                        var data = rewrite_rules.load();
                         var json = $.parseJSON(data);
                         rules_table.add_rows(json);
                         rules_table.createRows(2);
