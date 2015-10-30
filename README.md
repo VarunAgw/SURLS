@@ -42,9 +42,9 @@ RewriteRule ^r/(.+)$ surls.php?alias=$1 [L]
 ```
 
 #### How can I add Google Analytics to it?
-Just open the `surls.php` in a text editor and add Google Property code to it. It will do rest of the work itself.
+Just open the `surls.php` in a text editor and add Google Property code to it. It will do rest of the work itself. It is not implemented right now.
 
-#### I just want simple tracking, not complex solution like GA
+#### I want simple tracking, not complex solution like GA
 - Create [bit.ly](https://bit.ly) aliases for your favorite URL
 - Make SURLS URL points to `biy.ly` alias instead of original URL
 
