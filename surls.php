@@ -1,8 +1,8 @@
 <?php
 /**
- * SURLS: Simple URL Shortner
+ * SURLS: Simple URL Shortener
  *
- * A simple URL shortner based on Apache mod_rewrite RewriteRule Directive
+ * A simple URL shortener based on Apache mod_rewrite RewriteRule Directive
  * Enable mod_rewrite and put this program into website root directory to use it
  * 
  * @package    SURLS
@@ -40,7 +40,7 @@ class BasicAuthenticator {
     public static function Authenticate() {
         $credentials = self::$_credentials;
         if (!isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'])) {
-            header('WWW-Authenticate: Basic realm="Welcome to SURLS: Simple URL Shortner. This developer is lazy to implement a fancy login page');
+            header('WWW-Authenticate: Basic realm="Welcome to SURLS: Simple URL Shortener. This developer is lazy to implement a fancy login page');
             header('HTTP/1.0 401 Unauthorized');
             die('// @todo A message here.' . str_repeat('<br />', 100) . 'End of scroll ;)');
         }
@@ -365,7 +365,7 @@ class Request {
                 <div id="loader" style="height:100%; width:100%; position: fixed; background-color: white;">
                     <h1 style="position: fixed; top:35%; left:45%">Loading...</h1>
                 </div>
-                <h1>Welcome to SURLS: Simple URL Shortner </h1>
+                <h1>Welcome to SURLS: Simple URL Shortener </h1>
                 <table>
                     <thead>
                         <tr><th>S.No.</th><th>Enabled</th><th>Status Code</th><th>Alias (No Space)</th><th>URL</th></tr>

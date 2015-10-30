@@ -1,5 +1,5 @@
-# SURLS: Simple URL Shortner
-SURLS is a simple URL shortner for Apache based on .htaccess and RewriteRule Directive
+# SURLS: Simple URL Shortener
+SURLS is a simple URL shortener written in PHP based on Apache .htaccess and RewriteRule Directive
 
 ### Key Features
  - Single file based and portable
@@ -18,6 +18,7 @@ Apache with support for `.htaccess` and `mod_rewrite` enabled.
 
 #### What is the URL of aliases created by it?
 You can access them via any of these:
+
 1. `example.com/surls.php?alias=%alias%`
 2. `example.com/%alias%` (Required a workaround to support alias to custom function mapping, see below)
 3. `example.com/r/%alias%` (Requires a custom rewrite rule in .htaccess to enable it, see below)
@@ -45,6 +46,6 @@ Just open the `surls.php` in a text editor and add Google Property code to it. I
 
 #### I just want simple tracking, not complex solution like GA
 - Create `bit.ly` aliases for your favorite URL
-- Make SURLS URL points to `biy.ly` aliases instead of original URLf
+- Make SURLS URL points to `biy.ly` aliases instead of original URL
 
 The redirect flow will be like `example.com/alias -> bit.ly/abcde -> google.com/`
