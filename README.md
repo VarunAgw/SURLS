@@ -23,18 +23,18 @@ You can access them via any of these:
 2. `example.com/%alias%` (Required a workaround to support alias to custom function mapping, see below)
 3. `example.com/r/%alias%` (Requires a custom rewrite rule in .htaccess to enable it, see below)
 
-#### Instead of a simple redirect, I want to execute a custom function that will determine the redirect URL
+#### Instead of a simple redirect, I want to execute a custom function and optionally redirect
 - Create surls_functions.php in the same directory as surls.php
-- Add your function in it
-- See https://github.com/VarunAgw/SURLS/blob/master/surls_functions.php for a sample
+- Add your function into it
+- Download [surls_functions.php](https://github.com/VarunAgw/SURLS/blob/master/surls_functions.php) for a sample
 
-#### FAQ for `/%alias%`
+#### FAQ for /%alias%
 To support alias to custom function mapping, you need to add dummy link in admin panel for each alias. Point it to any URL, but since custom function have override over that link, your function will always run
 
-#### FAQ for `/surls.php?alias=%alias%`
+#### FAQ for /surls.php?alias=%alias%
 Don't need any additional .htaccess to be added manually and supports all features
 
-#### FAQ for `/r/%alias%`
+#### FAQ for /r/%alias%
 It supports alias to custom function mapping without need to add dummy link every time. But you need to add this small script in .htaccess to enable it.
 ```
 RewriteEngine on
