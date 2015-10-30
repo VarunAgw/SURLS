@@ -1,5 +1,5 @@
 # SURLS: Simple URL Shortner
-SURLS is a simple URL shortner for Apache based on .htaccess and Redirect Directive
+SURLS is a simple URL shortner for Apache based on .htaccess and RewriteRule Directive
 
 ### Key Features
  - Single file based and portable
@@ -7,36 +7,44 @@ SURLS is a simple URL shortner for Apache based on .htaccess and Redirect Direct
  - Supports click tracking
 
 ### Requirement
-Apache with support for `.htaccess` and `mod_alias` enabled.
+Apache with support for `.htaccess` and `mod_rewrite` enabled.
 
 ### Installation
 - Copy the `surls.php` into your website home directory.
 - Open it with a text editor and change the default username/password
-- Visit `https://www.example.com/surls.php` to use it
+- Visit `example.com/surls.php` to use it
 
 ### FAQ
 
 #### What is the URL of aliases created by it?
 You can access them via any of these:
-- `https://www.example.com/%alias%` (Doesn't support Google Analytics right now)
-- `https://www.example.com/surls.php?l=%alias%`
-- `https://www.example.com/s/%alias%` (Requires a rewrite rule in .htaccess, see below on how to add it)
+1. `example.com/surls.php?alias=%alias%`
+2. `example.com/%alias%` (Required a workaround to support alias to custom function mapping, see below)
+3. `example.com/r/%alias%` (Requires a custom rewrite rule in .htaccess to enable it, see below)
 
-#### What are Rewrite Rules required for third type of link?
-Add these rules in your `.htaccess` to allow these type of links
+#### Instead of a simple redirect, I want to execute a custom function that will determine the redirect URL
+- Create surls_functions.php in the same directory as surls.php
+- Add your function in it
+- See https://github.com/VarunAgw/SURLS/blob/master/surls_functions.php for a sample
+
+#### FAQ for `/%alias%`
+To support alias to custom function mapping, you need to add dummy link in admin panel for each alias. Point it to any URL, but since custom function have override over that link, your function will always run
+
+#### FAQ for `/surls.php?alias=%alias%`
+Don't need any additional .htaccess to be added manually and supports all features
+
+#### FAQ for `/r/%alias%`
+It supports alias to custom function mapping without need to add dummy link everytime. But you need to add this small script in .htaccess to enable it.
 ```
 RewriteEngine on
-RewriteRule ^s/(.+)$ surls.php?l=$1 [L]
+RewriteRule ^r/(.+)$ surls.php?alias=$1 [L]
 ```
 
 #### How can I add Google Analytics to it
-Just open the `surls.php` in a text editor and add Google Property code to it. It will do the rest of work by itself
+Just open the `surls.php` in a text editor and add Google Property code to it. It will do rest of the work itself.
 
 #### I just want simple tracking, not complex solution like GA
-- Create TinyURL aliases for your favorite URL
-- Make SURLS points to TinyURL instead of originial URL
+- Create `bit.ly` aliases for your favorite URL
+- Make SURLS URL points to `biy.ly` aliases instead of original URLf
 
-Now the redirect flow will be like `https://www.example.com/alias -> https://tinyurl.com/abcde -> https://www.google.com/`
-
-#### Instead of a simple redirect, I want to execute a custom function that will determine the redirect URL
-This feature will be updated soon and documentation for it will be available here
+The redirect flow will be like `example.com/alias -> bit.ly/abcde -> google.com/`
