@@ -48,4 +48,4 @@ Just open the `surls.php` in a text editor and add Google Property code to it. I
 - Create [bit.ly](https://bit.ly) aliases for your favorite URL
 - Make SURLS URL points to `biy.ly` alias instead of original URL
 
-The redirect flow will be like `example.com/alias -> bit.ly/abcde -> google.com/`
+The redirect flow will be like `example.com/alias -> bit.ly/abc -> boogle.com`
