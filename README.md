@@ -18,7 +18,7 @@ Apache with support for `.htaccess` and `mod_alias` enabled.
 
 #### What is the URL of aliases created by it?
 You can access them via any of these:
-- `https://www.example.com/%alias%`
+- `https://www.example.com/%alias%` (Doesn't support Google Analytics right now)
 - `https://www.example.com/surls.php?l=%alias%`
 - `https://www.example.com/s/%alias%` (Requires a rewrite rule in .htaccess, see below on how to add it)
 
