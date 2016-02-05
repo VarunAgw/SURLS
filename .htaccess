@@ -1,0 +1,7 @@
+RewriteEngine on
+
+RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_URI} -f
+RewriteRule ^surls/([^/]*)$ surls.php?alias=$1
+
+RewriteCond %{DOCUMENT_ROOT}/surls/%{REQUEST_URI} -f
+RewriteRule .* surls.php?alias=$0
