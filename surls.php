@@ -245,7 +245,14 @@ class Request {
         ?>
         <html>
             <head>
-                <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+                <?php
+                if (file_exists("jquery-2.2.0.min.js")) {
+                    $jquery = "jquery-2.2.0.min.js";
+                } else {
+                    $jquery = "https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js";
+                }
+                ?>
+                <script type="text/javascript" src="<?= $jquery ?>"></script>
                 <script type="text/javascript">
                     var csrf_token = "<?= CSRFProtection::getCSRFToken(); ?>";
                     $(document).ready(function ($) {
