@@ -15,6 +15,10 @@ Apache with `mod_rewrite` enabled.
 
 ### FAQ
 
+#### I want to try it before installing
+- Visit http://surls.apps.varunagw.com/ for a demo
+- Use username/password as admin/password
+
 #### What is the URL of aliases created by it?
 They can be accessed either of these ways:
 
@@ -29,7 +33,7 @@ They can be accessed either of these ways:
 - You can also download [surls_functions.php](https://github.com/VarunAgw/SURLS/blob/master/surls_functions.php) for a template.
 
 #### I want some basic tracking too!
-- Create [bit.ly](https://bit.ly) aliases for your favorite URL
+- Create a [bit.ly](https://bit.ly) aliases for your favorite URL
 - Make SURLS alias points to `biy.ly` link instead of the original URL
 
 The redirect flow will be like `example.com/alias -> bit.ly/abc -> boogle.com`
