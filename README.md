@@ -25,7 +25,8 @@ They can be accessed either of these ways:
 #### Instead of a simple redirect, I want to execute a custom function and optionally redirect
 - Create `surls_functions.php` in the same directory which contains surls.php
 - Add your function into it
-- Download [surls_functions.php](https://github.com/VarunAgw/SURLS/blob/master/surls_functions.php) for a template.
+- Make sure to create a dummy alias with the same name that you want to be processed by the function
+- You can also download [surls_functions.php](https://github.com/VarunAgw/SURLS/blob/master/surls_functions.php) for a template.
 
 #### I want some basic tracking too!
 - Create [bit.ly](https://bit.ly) aliases for your favorite URL
