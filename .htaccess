@@ -1,5 +1,7 @@
 RewriteEngine on
 
+RewriteRule ^surls/$ /surls.php [R=301]
+
 RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_URI} -f
 RewriteRule ^surls/([^/]*)$ surls.php?alias=$1
 
