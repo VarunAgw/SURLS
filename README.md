@@ -4,31 +4,30 @@ SURLS is a simple URL shortener written in PHP based on Apache RewriteRule Direc
 ### Key Features
  - Single file based and portable
  - Don't need any additional configuration with majority of Apache installation
- - Supports click tracking
 
 ### Requirements
 Apache with `mod_rewrite` enabled.
 
 ### Installation
-- Copy the `surls.php` and `.htaccess` into your website home directory.
+- Copy `surls.php` and `.htaccess` into your website home directory.
 - Open `surls.php` with a text editor and change the default username/password
 - Visit `example.com/surls.php` to use it
 
 ### FAQ
 
 #### What is the URL of aliases created by it?
-You can access them via any of these:
+They can be accessed either of these ways:
 
-1. `example.com/surls.php?alias=%alias%`
-2. `example.com/%alias%`
-3. `example.com/surls/%alias%`
+1. `example.com/%alias%`
+2. `example.com/surls/%alias%`
+3. `example.com/surls.php?alias=%alias%`
 
 #### Instead of a simple redirect, I want to execute a custom function and optionally redirect
-- Create surls_functions.php in the same directory which contains surls.php
+- Create `surls_functions.php` in the same directory which contains surls.php
 - Add your function into it
 - Download [surls_functions.php](https://github.com/VarunAgw/SURLS/blob/master/surls_functions.php) for a template.
 
-#### I want some tracking too!
+#### I want some basic tracking too!
 - Create [bit.ly](https://bit.ly) aliases for your favorite URL
 - Make SURLS alias points to `biy.ly` link instead of the original URL
 
