@@ -2,14 +2,12 @@
 /**
  * SURLS: Simple URL Shortener
  *
- * A simple URL shortener based on Apache mod_rewrite RewriteRule Directive
- * Enable mod_rewrite and put this program into website root directory to use it
+ * SURLS is a simple URL shortener written in PHP based on Apache RewriteRule Directive
+ * See README on how to use it
  * 
  * @package    SURLS
- * @version    1.1
+ * @version    1.2
  * @author     Varun Agrawal <Varun@VarunAgw.com>
- * @copyright  (c) 2015, Varun Agrawal
- * @license    http://www.gnu.org/licenses/gpl.txt GNU General Public License
  * @link       https://github.com/VarunAgw/SURLS
  */
 session_start();
