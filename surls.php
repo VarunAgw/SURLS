@@ -179,7 +179,7 @@ class Request {
             if (function_exists("surls_handler_$alias")) {
                 call_user_func("surls_handler_$alias");
             } else {
-                header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules['http_status_code']);
+                header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules[$alias]['http_status_code']);
             }
         } else {
             http_response_code(404);
