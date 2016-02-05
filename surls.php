@@ -101,88 +101,38 @@ class CSRFProtection {
 
 }
 
-class htaccess {
+class Rules {
 
-    protected static function parseRewriteRule($line) {
-        preg_match('~^'
-                . '\s*(#?)'
-                . '\s*RewriteRule'
-                . '\s+\^\(([a-zA-Z0-9]+)\)\$'
-                . '\s+surls\.php\?alias=\$1&code=(301|302)&url=(.+)'
-                . '$~i', $line, $match);
+    public static function GetRedirectRules() {
+        $redirect_rules = array();
 
-        if (empty($match)) {
-            return false;
-        } else {
-            return array(
-                'alias' => $match[2],
-                'enabled' => ($match[1] != '#'),
-                'http_status_code' => (int) $match[3],
-                'url' => rawurldecode($match[4]),
-            );
+        if (!file_exists('surls/')) {
+            mkdir("surls/");
         }
+
+        $aliases = scandir("surls/");
+        foreach ($aliases as $filename) {
+            if (in_array($filename, array(".", ".."))) {
+                continue;
+            }
+            $redirect_rules[$filename] = (array) json_decode(file_get_contents("surls/$filename"));
+        }
+
+        return $redirect_rules;
     }
 
-    public static function GetRewriteRules() {
-        $rewrite_rules = array();
-
-        if (!file_exists('.htaccess')) {
-            touch('.htaccess');
+    public static function updateRedirectRules($rules) {
+        if (!file_exists('surls/')) {
+            mkdir("surls/");
         }
 
-        $fp = fopen('.htaccess', 'r');
-        while (!feof($fp)) {
-            $line = rtrim(fgets($fp));
-            if (false !== ($rule = self::parseRewriteRule($line))) {
-                $rewrite_rules[$rule['alias']] = $rule;
-                unset($rewrite_rules[$rule['alias']]['alias']);
-            }
-        }
-        fclose($fp);
-        return $rewrite_rules;
-    }
-
-    public static function updateRewriteRules($rules) {
-        $ignored_lines = array(
-            'prefix1' => '# BEGAN SURLS AUTO-GENERATED CODE',
-            'prefix2' => '# MODIFYING THEM MANUALLY IS NOT RECOMMENDED',
-            'suffix1' => '# FINISHED SURLS AUTO-GENERATED CODE',
-            'rewrite_engine' => 'RewriteEngine on',
-        );
-        $file_contents = array();
-
-        if (!file_exists('.htaccess')) {
-            touch('.htaccess');
+        foreach (glob("surls/*") as $filename) {
+            unlink($filename);
         }
 
-        $fp = fopen('.htaccess', 'r');
-        $file_contents[] = $ignored_lines['rewrite_engine'];
-        while (!feof($fp)) {
-            $line = rtrim(fgets($fp));
-            if (false === self::parseRewriteRule($line) && !in_array($line, $ignored_lines)) {
-                $file_contents[] = $line;
-            }
-        }
-        fclose($fp);
-
-        // Add an empty line to seperate SURLS generated code
-        if ('' != end($file_contents)) {
-            $file_contents[] = '';
-        }
-        $file_contents[] = $ignored_lines['prefix1'];
-        $file_contents[] = $ignored_lines['prefix2'];
         foreach ($rules as $alias => $rule) {
-            $file_contents[] = ' '
-                    . ($rule['enabled'] == 'true' ? '' : '# ')
-                    . 'RewriteRule ^('
-                    . $alias . ')$ surls.php?alias=$1'
-                    . '&code=' . $rule['http_status_code']
-                    . '&url=' . rawurlencode($rule['url']);
+            file_put_contents("surls/$alias", json_encode($rule));
         }
-        $file_contents[] = $ignored_lines['suffix1'];
-
-        $file_content = implode("\n", $file_contents);
-        file_put_contents('.htaccess', $file_content);
     }
 
 }
@@ -192,7 +142,7 @@ class Request {
     public static function handleRequest() {
         if (isset($_REQUEST['alias'])) {
             $alias = $_REQUEST['alias'];
-            self::aliasPage($alias);
+            self::processAlias($alias);
             return;
         }
 
@@ -203,39 +153,37 @@ class Request {
             return;
         }
 
-        if ('get_rewrite_rules' == $_REQUEST['action']) {
+        if ('get_redirect_rules' == $_REQUEST['action']) {
             BasicAuthenticator::Authenticate();
-            $rewrite_rules = htaccess::GetRewriteRules();
-            echo json_encode($rewrite_rules);
+            $redirect_rules = Rules::GetRedirectRules();
+            echo json_encode($redirect_rules);
             return;
         }
 
-        if ('update_rewrite_rules' == $_REQUEST['action']) {
+        if ('update_redirect_rules' == $_REQUEST['action']) {
             BasicAuthenticator::Authenticate();
             if (CSRFProtection::validateRequestParam('csrf_token')) {
-                htaccess::updateRewriteRules($_REQUEST['data']);
+                Rules::updateRedirectRules($_REQUEST['data']);
             }
-            $rewrite_rules = htaccess::GetRewriteRules();
-            echo json_encode($rewrite_rules);
+            $redirect_rules = Rules::GetRedirectRules();
+            echo json_encode($redirect_rules);
             return;
         }
     }
 
-    protected static function aliasPage($alias) {
+    protected static function processAlias($alias) {
         if (file_exists('surls_functions.php')) {
-            $custom_functions = require('surls_functions.php');
-        } else {
-            $custom_functions = array();
+            require('surls_functions.php');
         }
 
-        if (isset($custom_functions[$alias])) {
-            $custom_functions[$alias]();
+        if (function_exists("surls_handler_$alias")) {
+            call_user_func("surls_handler_$alias");
         } else {
-            $rewrite_rules = htaccess::GetRewriteRules();
-            if (isset($rewrite_rules[$alias]) && true == $rewrite_rules[$alias]['enabled']) {
-                header("Location: {$rewrite_rules[$alias]['url']}", true, $rewrite_rules['http_status_code']);
+            $redirect_rules = Rules::GetRedirectRules();
+            if (isset($redirect_rules[$alias]) && true == $redirect_rules[$alias]['enabled']) {
+                header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules['http_status_code']);
             } else {
-                header("HTTP/1.0 404 Not Found");
+                http_response_code(404);
                 echo '<h1>404 Not Found</h1>';
             }
         }
@@ -267,7 +215,7 @@ class Request {
                                 var rule = $('#sample_rule').clone();
                                 rule.attr('id', false);
                                 rule.find('.rule_serial_number').text(table.find('tr').length + 1);
-                                rule.find('.rule_enabled').prop('checked', data.enabled);
+                                rule.find('.rule_enabled').prop('checked', "true" == data.enabled);
                                 rule.find('.rule_http_status_code').find(':contains(' + data.http_status_code + ')').prop('selected', true);
                                 rule.find('.rule_alias').val(alias);
                                 rule.find('.rule_url').val(data.url);
@@ -296,12 +244,12 @@ class Request {
                             }
                         }
 
-                        var rewrite_rules = {
+                        var redirect_rules = {
                             load: function () {
                                 return $.ajax({
                                     url: '',
                                     method: 'POST',
-                                    data: {action: 'get_rewrite_rules'},
+                                    data: {action: 'get_redirect_rules'},
                                     async: false,
                                 }).responseText;
                             },
@@ -309,7 +257,7 @@ class Request {
                                 return $.ajax({
                                     url: '',
                                     method: 'POST',
-                                    data: {action: 'update_rewrite_rules', data: data, csrf_token: csrf_token},
+                                    data: {action: 'update_redirect_rules', data: data, csrf_token: csrf_token},
                                     async: false,
                                 }).responseText;
                             }
@@ -317,7 +265,7 @@ class Request {
 
 
                         jQuery('#op_mom').click(function () {
-                            if (!(confirm("Click F5, You Idiot!\n\nCan you do this?"))) {
+                            if (!(confirm("Press F5, You Idiot!\n\nCan you do this?"))) {
                                 location.reload();
                             }
                         });
@@ -347,7 +295,7 @@ class Request {
                                 }
                             });
 
-                            var data = rewrite_rules.update(data);
+                            var data = redirect_rules.update(data);
                             var json = $.parseJSON(data);
                             rules_table.empty();
                             rules_table.add_rows(json);
@@ -357,7 +305,7 @@ class Request {
                             alert('Updated');
                         });
 
-                        var data = rewrite_rules.load();
+                        var data = redirect_rules.load();
                         var json = $.parseJSON(data);
                         rules_table.add_rows(json);
                         rules_table.createRows(2);
