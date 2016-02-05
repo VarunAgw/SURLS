@@ -174,16 +174,16 @@ class Request {
             require('surls_functions.php');
         }
 
-        if (function_exists("surls_handler_$alias")) {
-            call_user_func("surls_handler_$alias");
-        } else {
-            $redirect_rules = Rules::GetRedirectRules();
-            if (isset($redirect_rules[$alias]) && true == $redirect_rules[$alias]['enabled']) {
-                header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules['http_status_code']);
+        $redirect_rules = Rules::GetRedirectRules();
+        if (isset($redirect_rules[$alias]) && "true" == $redirect_rules[$alias]['enabled']) {
+            if (function_exists("surls_handler_$alias")) {
+                call_user_func("surls_handler_$alias");
             } else {
-                http_response_code(404);
-                echo '<h1>404 Not Found</h1>';
+                header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules['http_status_code']);
             }
+        } else {
+            http_response_code(404);
+            echo '<h1>404 Not Found</h1>';
         }
     }
 
