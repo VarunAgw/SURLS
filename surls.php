@@ -18,9 +18,7 @@ session_start();
  * ":" is not allowed in either username/password
  * Password can be raw or sha256 value
  * 
- * Use ` php -r "echo hash('sha256', 'password');"` to generate SHA256 value
- * Remember to prefix command with a space to prevent logging into history
- * See http://unix.stackexchange.com/a/115922/121183 for more.
+ * Use `php -r "echo hash('sha256', rtrim(fgets(STDIN)));"` to generate SHA256 value
  */
 BasicAuthenticator::setCredentials(
         'admin', 'password'
