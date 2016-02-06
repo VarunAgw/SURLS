@@ -6,7 +6,7 @@
  * See README on how to use it
  * 
  * @package    SURLS
- * @version    1.3
+ * @version    1.4
  * @author     Varun Agrawal <Varun@VarunAgw.com>
  * @link       https://github.com/VarunAgw/SURLS
  */
