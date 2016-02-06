@@ -38,7 +38,7 @@ class BasicAuthenticator {
         if (!isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'])) {
             header('WWW-Authenticate: Basic realm="Welcome to SURLS: Simple URL Shortener. This developer is lazy to implement a fancy login page');
             header('HTTP/1.0 401 Unauthorized');
-            die('// @todo A message here.' . str_repeat('<br />', 100) . 'End of scroll ;)');
+            die(str_repeat('<br />', 100) . 'End of scroll ;)');
         }
 
         if ($credentials['username'] == $_SERVER['PHP_AUTH_USER']) {
@@ -61,7 +61,7 @@ class BasicAuthenticator {
 
         header('WWW-Authenticate: Basic realm="Invalid username/password. Please try again"');
         header('HTTP/1.0 401 Unauthorized');
-        die('// @todo A message here.' . str_repeat('<br />', 100) . 'End of scroll ;)');
+        die(str_repeat('<br />', 100) . 'End of scroll ;)');
     }
 
 }
