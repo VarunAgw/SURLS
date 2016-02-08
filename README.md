@@ -16,7 +16,7 @@ Apache with `mod_rewrite` enabled.
 ### FAQ
 
 #### I want to try it before installing
-- Visit http://surls.varunagw.com/ for a demo
+- Visit https://surls.varunagw.com/ for a demo
 - Use username/password as admin/password
 
 #### What is the URL of aliases created by it?
