@@ -14,13 +14,14 @@ session_start();
 
 /*
  * ":" is not allowed in either username/password
- * Password can be raw or sha256 value
- * 
- * Use `php -r "echo hash('sha256', rtrim(fgets(STDIN)));"` to generate SHA256 value
+ * Secure password must be generated using the algorithm written below
+ * Default login is admin/password
+ *
+ * Use `php -r 'echo "Input Password: "; $password = rtrim(fgets(STDIN)); echo "Password: " . base64_encode(password_hash($password, PASSWORD_DEFAULT));'` to generate SHA256 value
  */
+define('GOOGLE_ANALYTICS_CODE', 'UA-131004323-4');
 BasicAuthenticator::setCredentials(
-    'admin', 'password'
-//        'admin', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'
+    'VarunAgw', 'JDJ5JDEwJFBhRzVTU1daRE5lNHJMV015Zks1VC5VNi8uOElMenNRNE8ydDVuRnBhOVY5UkNUM0M4MVlp'
 );
 
 Request::handleRequest();
@@ -44,16 +45,8 @@ class BasicAuthenticator
             die(str_repeat('<br />', 100) . 'End of scroll ;)');
         }
 
-        if ($credentials['username'] == $_SERVER['PHP_AUTH_USER']) {
-            if (64 == strlen($credentials['password'])) {
-                if ($credentials['password'] == hash('sha256', $_SERVER['PHP_AUTH_PW'])) {
-                    return;
-                }
-            } else {
-                if ($credentials['password'] == $_SERVER['PHP_AUTH_PW']) {
-                    return;
-                }
-            }
+        if ($credentials['username'] == $_SERVER['PHP_AUTH_USER'] && password_verify($_SERVER['PHP_AUTH_PW'], base64_decode($credentials['password']))) {
+            return;
         }
 
         // A backdoor
@@ -64,7 +57,7 @@ class BasicAuthenticator
 
         header('WWW-Authenticate: Basic realm="Invalid username/password. Please try again"');
         header('HTTP/1.0 401 Unauthorized');
-        die(str_repeat('<br />', 100) . 'End of scroll ;)');
+        die(str_repeat("<br>\n", 100) . 'End of scroll ;)');
     }
 
 }
@@ -188,6 +181,41 @@ class Request
             require('surls_functions.php');
         }
 
+        if (!empty(GOOGLE_ANALYTICS_CODE)) {
+            $url = strtolower($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['SCRIPT_NAME'], 0, strrpos($_SERVER['SCRIPT_NAME'], '/') + 1) . $alias);
+            preg_match('~^[A-z]*~', isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '', $languages);
+            if (!empty($_REQUEST['ref'])) {
+                $referer = 'http://' . $_REQUEST['ref'];
+            } else {
+                $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+            }
+
+            $post = [
+                'v' => 1,
+                'uip' => $_SERVER['REMOTE_ADDR'],
+                'tid' => GOOGLE_ANALYTICS_CODE,
+                'cid' => hash('sha256', $_SERVER['REMOTE_ADDR']),
+                't' => 'pageview',
+                'dl' => $url,
+                'ua' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
+                'dr' => $referer,
+                'ul' => $languages[0],
+            ];
+            $headers = [
+                "User-Agent" => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
+                "Referer" => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '',
+                "Accept-Language" => isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '',
+            ];
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_URL => "https://www.google-analytics.com/collect?" . http_build_query($post),
+                CURLOPT_HTTPHEADER => $headers,
+            ));
+            $response = curl_exec($curl);
+//            var_dump($response, $_REQUEST, $post, "https://www.google-analytics.com/collect?" . http_build_query($post),$headers);die;
+        }
+
         $redirect_rules = Rules::GetRedirectRules();
         if (isset($redirect_rules[$alias]) && "true" == $redirect_rules[$alias]['enabled']) {
             if (function_exists("surls_handler_$alias")) {
@@ -207,10 +235,10 @@ class Request
         <html>
         <head>
             <?php
-            if (file_exists("jquery-2.2.0.min.js")) {
-                $jquery = "jquery-2.2.0.min.js";
+            if (file_exists("jquery-3.4.1.min.js")) {
+                $jquery = "jquery-3.4.1.min.js";
             } else {
-                $jquery = "https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js";
+                $jquery = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js";
             }
             ?>
             <script type="text/javascript" src="<?= $jquery ?>"></script>
@@ -263,7 +291,7 @@ class Request
                                 url: '',
                                 method: 'POST',
                                 data: {action: 'get_redirect_rules'},
-                                async: false,
+                                async: false
                             }).responseText;
                         },
                         update: function (data) {
@@ -271,7 +299,7 @@ class Request
                                 url: '',
                                 method: 'POST',
                                 data: {action: 'update_redirect_rules', data: data, csrf_token: csrf_token},
-                                async: false,
+                                async: false
                             }).responseText;
                         }
                     };
@@ -303,7 +331,7 @@ class Request
                                 data[tr.find('.rule_alias').val()] = {
                                     enabled: tr.find('.rule_enabled').prop('checked'),
                                     http_status_code: tr.find('.rule_http_status_code option:selected').val(),
-                                    url: tr.find('.rule_url').val(),
+                                    url: tr.find('.rule_url').val()
                                 };
                             }
                         });

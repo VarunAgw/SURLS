@@ -2,22 +2,22 @@
 SURLS is a simple URL shortener written in PHP based on Apache RewriteRule Directive
 
 ### Key Features
- - Single file based and portable
- - Don't need any additional configuration with majority of Apache installation
+ - Portable and doesn't need database to run
+ - Don't need any additional configuration.
 
 ### Requirements
 Apache with `mod_rewrite` enabled.
 
 ### Installation
 - Copy `surls.php` and `.htaccess` into your website home directory.
-- Open `surls.php` with a text editor and change the default username/password
-- Visit `example.com/surls.php` to use it
+- Open `surls.php` with a text editor and change the default username/password.
+- Visit `example.com/surls.php` to use it.
 
 ### FAQ
 
 #### I want to try it before installing
-- Visit https://surls.varunagw.com/ for a demo
-- Use username/password as admin/password
+- Visit https://surls.varunagw.com/ for a demo.
+- Default username/password are admin/password.
 
 #### What is the URL of aliases created by it?
 They can be accessed either of these ways:
@@ -36,4 +36,4 @@ They can be accessed either of these ways:
 - Create a [bit.ly](https://bit.ly) aliases for your favorite URL
 - Make SURLS alias points to `biy.ly` link instead of the original URL
 
-The redirect flow will be like `example.com/alias -> bit.ly/abc -> boogle.com`
+The redirect flow will be like `example.com/alias -> bit.ly/abc -> example.com`
