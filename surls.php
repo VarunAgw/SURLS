@@ -21,10 +21,14 @@ session_start();
  */
 define('GOOGLE_ANALYTICS_CODE', 'UA-131004323-4');
 BasicAuthenticator::setCredentials(
-    'VarunAgw', 'JDJ5JDEwJFBhRzVTU1daRE5lNHJMV015Zks1VC5VNi8uOElMenNRNE8ydDVuRnBhOVY5UkNUM0M4MVlp'
+    'VarunAgw', 'JDJ5JDEwJEZTM3IvT2VhZURQSThNQi5rRmVucC54L1dQbklxeU44Z3YzY2g2dkJFUW5KT0NLaG9KZk91'
 );
 
-Request::handleRequest();
+if ($_SERVER['SCRIPT_NAME'] == '/surls.php') {
+    Request::processDashboard();
+} else {
+    Request::processAlias();
+}
 
 class BasicAuthenticator
 {
@@ -103,38 +107,34 @@ class CSRFProtection
 class Rules
 {
 
+    protected static $_surlsAliasesFile = __DIR__ . '/surlsAliases.php';
+
     public static function GetRedirectRules()
     {
-        $redirect_rules = array();
+        self::createMissingFiles();
+        require_once self::$_surlsAliasesFile;
+        return $surlsAliases;
+    }
 
-        if (!file_exists('surls/')) {
-            mkdir("surls/");
+    public static function createMissingFiles()
+    {
+        if (!file_exists(self::$_surlsAliasesFile)) {
+            file_put_contents(self::$_surlsAliasesFile, '<?php $surlsAliases = [];');
         }
-
-        $aliases = scandir("surls/");
-        foreach ($aliases as $filename) {
-            if (in_array($filename, array(".", ".."))) {
-                continue;
-            }
-            $redirect_rules[$filename] = (array)json_decode(file_get_contents("surls/$filename"));
-        }
-
-        return $redirect_rules;
     }
 
     public static function updateRedirectRules($rules)
     {
-        if (!file_exists('surls/')) {
-            mkdir("surls/");
-        }
-
-        foreach (glob("surls/*") as $filename) {
-            unlink($filename);
-        }
-
+        self::createMissingFiles();
+        $transformedRules = [];
         foreach ($rules as $alias => $rule) {
-            file_put_contents("surls/$alias", json_encode($rule));
+            $alias = strtolower($alias);
+            if (!isset($transformedRules[$alias])) {
+                $transformedRules[$alias] = $rule;
+            }
         }
+        ksort($transformedRules);
+        file_put_contents(self::$_surlsAliasesFile, '<?php $surlsAliases = ' . var_export($transformedRules, true) . ';');
     }
 
 }
@@ -142,14 +142,8 @@ class Rules
 class Request
 {
 
-    public static function handleRequest()
+    public static function processDashboard()
     {
-        if (isset($_REQUEST['alias'])) {
-            $alias = $_REQUEST['alias'];
-            self::processAlias($alias);
-            return;
-        }
-
         if (!isset($_REQUEST['action'])) {
             CSRFProtection::generateNewCsrfToken();
             BasicAuthenticator::Authenticate();
@@ -172,60 +166,6 @@ class Request
             $redirect_rules = Rules::GetRedirectRules();
             echo json_encode($redirect_rules);
             return;
-        }
-    }
-
-    protected static function processAlias($alias)
-    {
-        if (file_exists('surls_functions.php')) {
-            require('surls_functions.php');
-        }
-
-        if (!empty(GOOGLE_ANALYTICS_CODE)) {
-            $url = strtolower($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['SCRIPT_NAME'], 0, strrpos($_SERVER['SCRIPT_NAME'], '/') + 1) . $alias);
-            preg_match('~^[A-z]*~', isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '', $languages);
-            if (!empty($_REQUEST['ref'])) {
-                $referer = 'http://' . $_REQUEST['ref'];
-            } else {
-                $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-            }
-
-            $post = [
-                'v' => 1,
-                'uip' => $_SERVER['REMOTE_ADDR'],
-                'tid' => GOOGLE_ANALYTICS_CODE,
-                'cid' => hash('sha256', $_SERVER['REMOTE_ADDR']),
-                't' => 'pageview',
-                'dl' => $url,
-                'ua' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
-                'dr' => $referer,
-                'ul' => $languages[0],
-            ];
-            $headers = [
-                "User-Agent" => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
-                "Referer" => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '',
-                "Accept-Language" => isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '',
-            ];
-            $curl = curl_init();
-            curl_setopt_array($curl, array(
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_URL => "https://www.google-analytics.com/collect?" . http_build_query($post),
-                CURLOPT_HTTPHEADER => $headers,
-            ));
-            $response = curl_exec($curl);
-//            var_dump($response, $_REQUEST, $post, "https://www.google-analytics.com/collect?" . http_build_query($post),$headers);die;
-        }
-
-        $redirect_rules = Rules::GetRedirectRules();
-        if (isset($redirect_rules[$alias]) && "true" == $redirect_rules[$alias]['enabled']) {
-            if (function_exists("surls_handler_$alias")) {
-                call_user_func("surls_handler_$alias");
-            } else {
-                header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules[$alias]['http_status_code']);
-            }
-        } else {
-            http_response_code(404);
-            echo '<h1>404 Not Found</h1>';
         }
     }
 
@@ -393,6 +333,64 @@ class Request
         </body>
         </html>
         <?php
+    }
+
+    public static function processAlias()
+    {
+        $alias = substr($_SERVER['REQUEST_URI'], 1);
+
+        if (file_exists('surlsFunctions.php')) {
+            require('surlsFunctions.php');
+        }
+
+        if (!empty(GOOGLE_ANALYTICS_CODE)) {
+            $url = strtolower($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . substr($_SERVER['SCRIPT_NAME'], 0, strrpos($_SERVER['SCRIPT_NAME'], '/') + 1) . $alias);
+            preg_match('~^[A-z]*~', isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '', $languages);
+            if (!empty($_REQUEST['ref'])) {
+                $referer = 'http://' . $_REQUEST['ref'];
+            } else {
+                $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+            }
+
+            $post = [
+                'v' => 1,
+                'uip' => $_SERVER['REMOTE_ADDR'],
+                'tid' => GOOGLE_ANALYTICS_CODE,
+                'cid' => hash('sha256', $_SERVER['REMOTE_ADDR']),
+                't' => 'pageview',
+                'dl' => $url,
+                'ua' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
+                'dr' => $referer,
+                'ul' => $languages[0],
+            ];
+            $headers = [
+                "User-Agent" => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '',
+                "Referer" => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '',
+                "Accept-Language" => isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '',
+            ];
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_URL => "https://www.google-analytics.com/collect?" . http_build_query($post),
+                CURLOPT_HTTPHEADER => $headers,
+            ));
+            $response = curl_exec($curl);
+//            var_dump($response, $_REQUEST, $post, "https://www.google-analytics.com/collect?" . http_build_query($post),$headers);die;
+        }
+
+        $redirect_rules = Rules::GetRedirectRules();
+        if (file_exists(__DIR__ . '/surlsHandlers.php')) {
+            require_once __DIR__ . '/surlsHandlers.php';
+        } else {
+            $surlsHandlers = [];
+        }
+        if (isset($surlsHandlers[$alias])) {
+            $surlsHandlers[$alias]();
+        } elseif (isset($redirect_rules[$alias]) && "true" == $redirect_rules[$alias]['enabled']) {
+            header("Location: {$redirect_rules[$alias]['url']}", true, $redirect_rules[$alias]['http_status_code']);
+            die;
+        }
+
     }
 
 }

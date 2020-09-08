@@ -1,13 +1,9 @@
 # BEGIN SURLS
-RewriteEngine on
+RewriteEngine On
+RewriteBase /
+RewriteRule surls$ /surls.php [L]
 
-# Optional (Don't enable if a different website exist at same URL too)
-#RewriteRule ^$ surls.php
-
-RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_URI} -f
-RewriteRule ^surls/([^/]*)$ surls.php?alias=$1 [QSA,L]
-
-RewriteCond %{REQUEST_URI} ^(/.*)?/(.*)$
-RewriteCond %{DOCUMENT_ROOT}%1/surls/%2 -f
-RewriteRule .* %1/surls.php?alias=%2 [QSA,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
 # END SURLS
